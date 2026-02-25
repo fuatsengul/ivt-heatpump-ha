@@ -28,7 +28,6 @@ from .const import (
     HC_CONTROL_TYPE,
     HC_HEAT_COOL_MODE,
     HC_SUWI_MODE,
-    HC_SUWI_SWITCH,
     HC_SUWI_THRESHOLD,
     # DHW
     DHW_ACTUAL_TEMP,
@@ -42,6 +41,7 @@ from .const import (
     DHW_TEMP_HIGH,
     DHW_TEMP_LOW,
     DHW_TD_MODE,
+    DHW_REDUCE_TEMP_ON_ALARM,
     # Heat Sources
     HS_ACTUAL_MODULATION,
     HS_SUPPLY_TEMP,
@@ -53,6 +53,14 @@ from .const import (
     HS_EM_STATUS,
     # System
     SYS_OUTDOOR_TEMP,
+    # Variable Tariff
+    VT_CH_OPTIMIZATION,
+    VT_CH_HIGH_DELTA,
+    VT_CH_LOW_DELTA,
+    VT_CH_MID_SETPOINT,
+    VT_DHW_OPTIMIZATION,
+    VT_DHW_HIGH_ENABLE,
+    VT_DHW_LOW_ENABLE,
     # Recordings (energy)
     REC_TOTAL_COMPRESSOR,
     REC_TOTAL_EHEATER,
@@ -81,6 +89,9 @@ POLL_PATHS = [
     HC_MAX_FLOW_TEMP,
     HC_HEAT_COOL_MODE,
     HC_SUWI_MODE,
+    HC_SUWI_THRESHOLD,
+    HC_HEATING_TYPE,
+    HC_CONTROL_TYPE,
     # DHW
     DHW_ACTUAL_TEMP,
     DHW_CURRENT_SETPOINT,
@@ -93,6 +104,7 @@ POLL_PATHS = [
     DHW_TEMP_HIGH,
     DHW_TEMP_LOW,
     DHW_TD_MODE,
+    DHW_REDUCE_TEMP_ON_ALARM,
     # Heat sources
     HS_ACTUAL_MODULATION,
     HS_SUPPLY_TEMP,
@@ -104,6 +116,14 @@ POLL_PATHS = [
     HS_EM_STATUS,
     # System
     SYS_OUTDOOR_TEMP,
+    # Variable Tariff
+    VT_CH_OPTIMIZATION,
+    VT_CH_HIGH_DELTA,
+    VT_CH_LOW_DELTA,
+    VT_CH_MID_SETPOINT,
+    VT_DHW_OPTIMIZATION,
+    VT_DHW_HIGH_ENABLE,
+    VT_DHW_LOW_ENABLE,
 ]
 
 # Energy recording paths (polled less frequently)
