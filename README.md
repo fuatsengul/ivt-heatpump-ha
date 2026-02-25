@@ -1,5 +1,10 @@
 # IVT Heat Pump — Home Assistant Integration
 
+> **⚠️ EXPERIMENTAL — VIBECODED**
+> This integration was vibecoded (AI-generated with human guidance) and is experimental.
+> It has not been extensively tested in production. Use at your own risk.
+> Contributions, bug reports, and testing feedback are welcome.
+
 A clean, standalone Home Assistant custom component for **IVT / Bosch heat pumps** using the **PoinTT OAuth2 API** (cloud, via K30 gateway).
 
 Built specifically for IVT heat pumps — no generic abstractions, no database JSON configs. Direct API calls, readable code.
