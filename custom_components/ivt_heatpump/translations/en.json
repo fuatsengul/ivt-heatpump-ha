@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "IVT Heat Pump Setup",
+        "description": "Choose how to connect to your IVT heat pump via Bosch PoinTT API.",
+        "data": {
+          "method": "Setup method"
+        }
+      },
+      "manual": {
+        "title": "Manual Token Entry",
+        "description": "Paste the values from your tokens.json file.",
+        "data": {
+          "device_id": "Device ID (gateway serial)",
+          "access_token": "Access Token",
+          "refresh_token": "Refresh Token",
+          "token_expires_at": "Token Expires At (ISO timestamp, optional)"
+        }
+      },
+      "oauth_start": {
+        "title": "OAuth Login — Step 1",
+        "description": "Enter your device ID to begin the OAuth login flow.",
+        "data": {
+          "device_id": "Device ID (gateway serial)"
+        }
+      },
+      "oauth_callback": {
+        "title": "OAuth Login — Step 2",
+        "description": "Open this URL in your browser and log in:\n\n{auth_url}\n\nAfter login, you'll be redirected. Copy the full redirect URL and paste it below.",
+        "data": {
+          "callback_url": "Callback URL (paste the redirect URL)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the heat pump. Check your device ID and tokens.",
+      "invalid_code": "Could not extract authorization code from the URL. Make sure you copied the full redirect URL.",
+      "token_exchange_failed": "Token exchange failed. The authorization code may have expired. Try again."
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  }
+}

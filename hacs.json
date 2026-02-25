@@ -1,0 +1,5 @@
+{
+  "name": "IVT Heat Pump",
+  "render_readme": true,
+  "domains": ["climate", "water_heater", "sensor", "number", "switch", "button"]
+}
