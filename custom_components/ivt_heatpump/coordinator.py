@@ -53,6 +53,20 @@ from .const import (
     HS_EM_STATUS,
     # System
     SYS_OUTDOOR_TEMP,
+    SYS_TYPE,
+    # Gateway
+    GW_FIRMWARE,
+    GW_HARDWARE,
+    GW_IP,
+    GW_MAC,
+    GW_SSID,
+    GW_SERIAL,
+    GW_SW_PREFIX,
+    GW_TIMEZONE,
+    # Heat source per-source starts
+    HS_HS1_STARTS,
+    # Notifications
+    NOTIFICATIONS,
     # Variable Tariff
     VT_CH_OPTIMIZATION,
     VT_CH_HIGH_DELTA,
@@ -116,6 +130,20 @@ POLL_PATHS = [
     HS_EM_STATUS,
     # System
     SYS_OUTDOOR_TEMP,
+    SYS_TYPE,
+    # Gateway
+    GW_FIRMWARE,
+    GW_HARDWARE,
+    GW_IP,
+    GW_MAC,
+    GW_SSID,
+    GW_SERIAL,
+    GW_SW_PREFIX,
+    GW_TIMEZONE,
+    # Heat source per-source
+    HS_HS1_STARTS,
+    # Notifications
+    NOTIFICATIONS,
     # Variable Tariff
     VT_CH_OPTIMIZATION,
     VT_CH_HIGH_DELTA,
@@ -198,3 +226,26 @@ class IVTDataCoordinator(DataUpdateCoordinator):
         if not self.data:
             return None
         return self.data.get(path)
+
+    def get_values_list(self, path: str) -> list | None:
+        """Get the 'values' list for endpoints like numberOfStarts, notifications.
+
+        These endpoints return: {"id": "...", "values": [{...}, ...]}
+        """
+        entry = self.get_entry(path)
+        if entry and isinstance(entry, dict):
+            return entry.get("values")
+        return None
+
+    def get_emon_value(self, path: str, key: str) -> float | None:
+        """Get a specific value from an emon-style values list.
+
+        E.g. /heatSources/hs1/numberOfStarts has:
+          values: [{"ch": 4052}, {"dhw": 519}, {"cooling": 0}, {"total": 4571}]
+        """
+        values = self.get_values_list(path)
+        if values:
+            for item in values:
+                if isinstance(item, dict) and key in item:
+                    return item[key]
+        return None

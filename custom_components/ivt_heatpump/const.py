@@ -69,8 +69,8 @@ DHW_TEMP_OFF = "/dhwCircuits/dhw1/temperatureLevels/off"
 
 # DHW modes (Bosch API values)
 DHW_MODE_OFF = "Off"
-DHW_MODE_LOW = "low"       # ECO+ in IVT app
-DHW_MODE_ECO = "eco"       # ECO in IVT app
+DHW_MODE_ECO = "low"       # ECO+ in IVT app
+DHW_MODE_LOW = "eco"       # ECO in IVT app
 DHW_MODE_HIGH = "high"     # Comfort in IVT app
 DHW_MODE_AUTO = "ownprogram"  # Auto/Schedule in IVT app
 
@@ -106,6 +106,21 @@ GW_HARDWARE = "/gateway/versionHardware"
 GW_DATETIME = "/gateway/dateTime"
 GW_UUID = "/gateway/uuid"
 GW_IP = "/gateway/wifi/ip/ipv4"
+GW_MAC = "/gateway/wifi/mac"
+GW_SSID = "/gateway/wifi/ssid"
+GW_SERIAL = "/gateway/serialId"
+GW_SW_PREFIX = "/gateway/swPrefix"
+GW_TIMEZONE = "/gateway/tzInfo/timeZone"
+
+# ── System (additional) ─────────────────────────────────────
+SYS_TYPE = "/system/type"
+SYS_INFO = "/system/info"
+
+# ── Heat Source (per-source starts) ──────────────────────────
+HS_HS1_STARTS = "/heatSources/hs1/numberOfStarts"
+
+# ── Notifications ────────────────────────────────────────────
+NOTIFICATIONS = "/notifications"
 
 # ── Recordings (Energy Monitoring) ──────────────────────────
 # Fetched at runtime — these are the endpoint paths

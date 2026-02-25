@@ -58,8 +58,21 @@ from .const import (
     HS_NUM_STARTS,
     HS_STANDBY,
     HS_EM_STATUS,
+    HS_HS1_STARTS,
     # System
     SYS_OUTDOOR_TEMP,
+    SYS_TYPE,
+    # Gateway
+    GW_FIRMWARE,
+    GW_HARDWARE,
+    GW_IP,
+    GW_MAC,
+    GW_SSID,
+    GW_SERIAL,
+    GW_SW_PREFIX,
+    GW_TIMEZONE,
+    # Notifications
+    NOTIFICATIONS,
     # Energy recordings
     REC_TOTAL_COMPRESSOR,
     REC_TOTAL_EHEATER,
@@ -112,6 +125,15 @@ STATUS_SENSORS = [
     (HS_HEAT_DEMAND, "Heat Demand Source", None, None, None, "mdi:fire-circle", None),
     (HS_STANDBY, "Heat Pump Standby", None, None, None, "mdi:power-standby", "diagnostic"),
     (HS_EM_STATUS, "External Module Status", None, None, None, "mdi:expansion-card", "diagnostic"),
+    (SYS_TYPE, "System Type", None, None, None, "mdi:heat-pump", "diagnostic"),
+    (GW_SERIAL, "Gateway Serial", None, None, None, "mdi:identifier", "diagnostic"),
+    (GW_FIRMWARE, "Gateway Firmware", None, None, None, "mdi:chip", "diagnostic"),
+    (GW_HARDWARE, "Gateway Hardware", None, None, None, "mdi:chip", "diagnostic"),
+    (GW_SW_PREFIX, "Gateway Software", None, None, None, "mdi:chip", "diagnostic"),
+    (GW_IP, "Gateway IP Address", None, None, None, "mdi:ip-network", "diagnostic"),
+    (GW_MAC, "Gateway MAC Address", None, None, None, "mdi:network-outline", "diagnostic"),
+    (GW_SSID, "Gateway WiFi SSID", None, None, None, "mdi:wifi", "diagnostic"),
+    (GW_TIMEZONE, "Gateway Timezone", None, None, None, "mdi:map-clock", "diagnostic"),
 ]
 
 NUMERIC_SENSORS = [
@@ -155,6 +177,20 @@ async def async_setup_entry(
 
     for path, name, dc, sc, unit, icon, cat in ENERGY_SENSORS:
         entities.append(IVTEnergySensor(coordinator, entry, path, name, dc, sc, unit, icon, cat))
+
+    # Per-source compressor starts (from hs1/numberOfStarts values list)
+    for key, label in [("ch", "CH"), ("dhw", "DHW"), ("cooling", "Cooling"), ("total", "Total")]:
+        entities.append(
+            IVTEmonSensor(
+                coordinator, entry, HS_HS1_STARTS, key,
+                f"{label} Compressor Starts",
+                None, SensorStateClass.TOTAL_INCREASING, None,
+                "mdi:counter", "diagnostic",
+            )
+        )
+
+    # Notification count sensor
+    entities.append(IVTNotificationSensor(coordinator, entry))
 
     async_add_entities(entities)
 
@@ -250,3 +286,89 @@ class IVTEnergySensor(IVTSensor):
 
         # Fallback: maybe it's a simple value
         return entry.get("value")
+
+
+class IVTEmonSensor(CoordinatorEntity, SensorEntity):
+    """Sensor that reads a specific key from an emon-style values list.
+
+    E.g. /heatSources/hs1/numberOfStarts has:
+      values: [{"ch": 4052}, {"dhw": 519}, {"cooling": 0}, {"total": 4571}]
+    """
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: IVTDataCoordinator,
+        entry: ConfigEntry,
+        path: str,
+        key: str,
+        name: str,
+        device_class,
+        state_class,
+        unit,
+        icon: str,
+        entity_category: str | None,
+    ):
+        super().__init__(coordinator)
+        self._path = path
+        self._key = key
+        self._attr_name = name
+        self._attr_device_class = device_class
+        self._attr_state_class = state_class
+        self._attr_native_unit_of_measurement = unit
+        self._attr_icon = icon
+        if entity_category:
+            from homeassistant.helpers.entity import EntityCategory
+            self._attr_entity_category = EntityCategory(entity_category)
+        path_slug = path.replace("/", "_").strip("_")
+        self._attr_unique_id = f"{entry.data['device_id']}_{path_slug}_{key}"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.data["device_id"])},
+            "name": "IVT Heat Pump",
+            "manufacturer": MANUFACTURER,
+            "model": "K30",
+        }
+
+    @property
+    def native_value(self):
+        """Extract value for our key from the values list."""
+        return self.coordinator.get_emon_value(self._path, self._key)
+
+
+class IVTNotificationSensor(CoordinatorEntity, SensorEntity):
+    """Sensor showing number of active notifications/errors.
+
+    /notifications returns: {"type": "errorList", "values": [...]}
+    """
+
+    _attr_has_entity_name = True
+    _attr_name = "Active Notifications"
+    _attr_icon = "mdi:bell-alert"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator: IVTDataCoordinator, entry: ConfigEntry):
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.data['device_id']}_notifications_count"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.data["device_id"])},
+            "name": "IVT Heat Pump",
+            "manufacturer": MANUFACTURER,
+            "model": "K30",
+        }
+
+    @property
+    def native_value(self) -> int:
+        """Number of active notifications."""
+        values = self.coordinator.get_values_list(NOTIFICATIONS)
+        if values is None:
+            return 0
+        return len(values)
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Include the notification details as attributes."""
+        values = self.coordinator.get_values_list(NOTIFICATIONS)
+        if values:
+            return {"notifications": values}
+        return {"notifications": []}

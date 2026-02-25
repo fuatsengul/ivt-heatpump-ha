@@ -14,12 +14,17 @@ from .const import (
     CONF_REFRESH_TOKEN,
     CONF_TOKEN_EXPIRES_AT,
     DOMAIN,
+    GW_FIRMWARE,
+    GW_HARDWARE,
+    GW_SERIAL,
+    GW_MAC,
+    SYS_TYPE,
 )
 from .coordinator import IVTDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["climate", "water_heater", "sensor", "number", "switch", "button"]
+PLATFORMS = ["climate", "water_heater", "sensor", "binary_sensor", "number", "switch", "button"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -53,6 +58,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     coordinator = IVTDataCoordinator(hass, api)
     await coordinator.async_config_entry_first_refresh()
+
+    # Enrich device info from first poll data
+    device_id = entry.data[CONF_DEVICE_ID]
+    fw_version = coordinator.get_value(GW_FIRMWARE)
+    hw_version = coordinator.get_value(GW_HARDWARE)
+    serial = coordinator.get_value(GW_SERIAL)
+    mac_addr = coordinator.get_value(GW_MAC)
+    sys_type = coordinator.get_value(SYS_TYPE)
+    model = f"K30 ({sys_type})" if sys_type and sys_type != "unknown" else "K30"
+
+    # Register device with enriched info
+    from homeassistant.helpers import device_registry as dr
+    dev_reg = dr.async_get(hass)
+    dev_reg.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, device_id)},
+        name="IVT Heat Pump",
+        manufacturer="Bosch / IVT",
+        model=model,
+        sw_version=fw_version,
+        hw_version=hw_version,
+        serial_number=serial or device_id,
+        connections={(dr.CONNECTION_NETWORK_MAC, mac_addr)} if mac_addr else set(),
+    )
 
     hass.data[DOMAIN][entry.entry_id] = {
         "api": api,
