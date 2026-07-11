@@ -65,8 +65,11 @@ If you already have tokens (e.g. from the bosch-thermostat-client-python `tokens
 ### Option 2: OAuth login
 1. Enter Device ID
 2. Open the provided OAuth URL in a browser
-3. Log in with your Bosch SingleKey ID
-4. Paste the callback redirect URL
+3. press F12 for show DevTools, check Preserve Log
+4. Log in with your Bosch SingleKey ID
+5. copy Location parameter in **Response headers** Part on **callback?redirect_uri** page and Paste to the callback redirect URL 
+
+> when error  Authentication error: Token refresh failed (400): {"error":"invalid_grant"}, you need to delete HA IVT configutation and Add again as new device
 
 ## API Endpoints Used
 
