@@ -93,6 +93,20 @@ HS_HP_TYPE = "/heatSources/hs1/heatPumpType"
 HS_STANDBY = "/heatSources/standbyMode"
 HS_EM_STATUS = "/heatSources/emStatus"
 
+# Brine circuit (ground source). Named from the heat pump's side: while the
+# compressor runs, collectorInflowTemp is the warmer brine coming up from the
+# borehole INTO the heat pump, and collectorOutflowTemp the brine leaving the
+# evaporator ~3 °C colder, back to the borehole.
+HS_BRINE_IN_TEMP = "/heatSources/hs1/brineCircuit/collectorInflowTemp"
+HS_BRINE_OUT_TEMP = "/heatSources/hs1/brineCircuit/collectorOutflowTemp"
+
+# ── Energy Monitoring (lifetime kWh counters) ───────────────
+# Returns {"type": "emonValue", "unit": "kWh",
+#          "values": [{"outputProduced": n}, {"eheater": n}, {"compressor": n}]}
+EMON_TOTAL = "/heatSources/emon/totalConsumption"
+EMON_CH = "/heatSources/emon/chConsumption"
+EMON_DHW = "/heatSources/emon/dhwConsumption"
+
 # ── System ───────────────────────────────────────────────────
 SYS_OUTDOOR_TEMP = "/system/sensors/temperatures/outdoor_t1"
 SYS_DATETIME = "/system/dateTime"
@@ -122,8 +136,10 @@ HS_HS1_STARTS = "/heatSources/hs1/numberOfStarts"
 # ── Notifications ────────────────────────────────────────────
 NOTIFICATIONS = "/notifications"
 
-# ── Recordings (Energy Monitoring) ──────────────────────────
-# Fetched at runtime — these are the endpoint paths
+# ── Recordings (historical data) ────────────────────────────
+# These only answer with an ?interval=YYYY-MM or ?interval=YYYY-MM-DD query
+# appended (403 without it). The REC_* energy paths are kept because the
+# energy sensors' unique IDs were derived from them.
 REC_TOTAL_COMPRESSOR = "/recordings/heatSources/emon/total/compressor"
 REC_TOTAL_EHEATER = "/recordings/heatSources/emon/total/eheater"
 REC_TOTAL_OUTPUT = "/recordings/heatSources/emon/total/outputProduced"

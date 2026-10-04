@@ -59,6 +59,8 @@ from .const import (
     HS_STANDBY,
     HS_EM_STATUS,
     HS_HS1_STARTS,
+    HS_BRINE_IN_TEMP,
+    HS_BRINE_OUT_TEMP,
     # System
     SYS_OUTDOOR_TEMP,
     SYS_TYPE,
@@ -73,7 +75,11 @@ from .const import (
     GW_TIMEZONE,
     # Notifications
     NOTIFICATIONS,
-    # Energy recordings
+    # Energy monitoring
+    EMON_TOTAL,
+    EMON_CH,
+    EMON_DHW,
+    # Legacy energy paths (only used for unique IDs)
     REC_TOTAL_COMPRESSOR,
     REC_TOTAL_EHEATER,
     REC_TOTAL_OUTPUT,
@@ -102,6 +108,8 @@ TEMPERATURE_SENSORS = [
     (HC_MAX_FLOW_TEMP, "Max Flow Temperature", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:waves-arrow-up", "diagnostic"),
     (HS_SUPPLY_TEMP, "Supply Temperature", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:pipe", None),
     (HS_RETURN_TEMP, "Return Temperature", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:pipe", None),
+    (HS_BRINE_IN_TEMP, "Brine In Temperature", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:arrow-collapse-right", None),
+    (HS_BRINE_OUT_TEMP, "Brine Out Temperature", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:arrow-expand-right", None),
     (DHW_ACTUAL_TEMP, "Hot Water Temperature", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:water-thermometer", None),
     (DHW_CURRENT_SETPOINT, "Hot Water Target", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:water-thermometer", None),
     (DHW_TEMP_ECO, "DHW ECO Level", SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT, UnitOfTemperature.CELSIUS, "mdi:leaf", "diagnostic"),
@@ -142,16 +150,18 @@ NUMERIC_SENSORS = [
     (DHW_CHARGE_DURATION, "Charge Duration Setting", None, None, "min", "mdi:timer-outline", "diagnostic"),
 ]
 
+# (legacy unique-id path, emon path, emon key, name, icon, category)
+# The REC_* path only feeds the unique ID so existing entity IDs are kept.
 ENERGY_SENSORS = [
-    (REC_TOTAL_COMPRESSOR, "Total Compressor Energy", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt", None),
-    (REC_TOTAL_EHEATER, "Total E-Heater Energy", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt", None),
-    (REC_TOTAL_OUTPUT, "Total Heat Output", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:fire-circle", None),
-    (REC_CH_COMPRESSOR, "CH Compressor Energy", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt", "diagnostic"),
-    (REC_CH_EHEATER, "CH E-Heater Energy", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt", "diagnostic"),
-    (REC_CH_OUTPUT, "CH Heat Output", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:fire-circle", "diagnostic"),
-    (REC_DHW_COMPRESSOR, "DHW Compressor Energy", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt", "diagnostic"),
-    (REC_DHW_EHEATER, "DHW E-Heater Energy", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt", "diagnostic"),
-    (REC_DHW_OUTPUT, "DHW Heat Output", SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING, UnitOfEnergy.KILO_WATT_HOUR, "mdi:fire-circle", "diagnostic"),
+    (REC_TOTAL_COMPRESSOR, EMON_TOTAL, "compressor", "Total Compressor Energy", "mdi:lightning-bolt", None),
+    (REC_TOTAL_EHEATER, EMON_TOTAL, "eheater", "Total E-Heater Energy", "mdi:lightning-bolt", None),
+    (REC_TOTAL_OUTPUT, EMON_TOTAL, "outputProduced", "Total Heat Output", "mdi:fire-circle", None),
+    (REC_CH_COMPRESSOR, EMON_CH, "compressor", "CH Compressor Energy", "mdi:lightning-bolt", "diagnostic"),
+    (REC_CH_EHEATER, EMON_CH, "eheater", "CH E-Heater Energy", "mdi:lightning-bolt", "diagnostic"),
+    (REC_CH_OUTPUT, EMON_CH, "outputProduced", "CH Heat Output", "mdi:fire-circle", "diagnostic"),
+    (REC_DHW_COMPRESSOR, EMON_DHW, "compressor", "DHW Compressor Energy", "mdi:lightning-bolt", "diagnostic"),
+    (REC_DHW_EHEATER, EMON_DHW, "eheater", "DHW E-Heater Energy", "mdi:lightning-bolt", "diagnostic"),
+    (REC_DHW_OUTPUT, EMON_DHW, "outputProduced", "DHW Heat Output", "mdi:fire-circle", "diagnostic"),
 ]
 
 
@@ -175,8 +185,8 @@ async def async_setup_entry(
     for path, name, dc, sc, unit, icon, cat in NUMERIC_SENSORS:
         entities.append(IVTSensor(coordinator, entry, path, name, dc, sc, unit, icon, cat))
 
-    for path, name, dc, sc, unit, icon, cat in ENERGY_SENSORS:
-        entities.append(IVTEnergySensor(coordinator, entry, path, name, dc, sc, unit, icon, cat))
+    for uid_path, emon_path, key, name, icon, cat in ENERGY_SENSORS:
+        entities.append(IVTEnergySensor(coordinator, entry, uid_path, emon_path, key, name, icon, cat))
 
     # Per-source compressor starts (from hs1/numberOfStarts values list)
     for key, label in [("ch", "CH"), ("dhw", "DHW"), ("cooling", "Cooling"), ("total", "Total")]:
@@ -256,36 +266,45 @@ class IVTSensor(CoordinatorEntity, SensorEntity):
 
 
 class IVTEnergySensor(IVTSensor):
-    """Energy sensor that extracts cumulative kWh from recording data.
+    """Lifetime kWh counter read from an energy-monitoring (emon) resource.
 
-    Recording API returns data like:
-    {
-        "type": "recordedValue",
-        "recordedResource": {"id": "/heatSources/emon/total/compressor"},
-        "interval": ...,
-        "recording": [{"c": 2.1, "d": "2024-01-01", "y": 123.4}, ...]
-    }
+    /heatSources/emon/totalConsumption (and ch/dhwConsumption) return:
+      {"type": "emonValue", "unit": "kWh",
+       "values": [{"outputProduced": 61165}, {"eheater": 115}, {"compressor": 14424}]}
 
-    The cumulative value 'y' from the last recording entry gives total kWh.
+    The unique ID still comes from the old /recordings path so entity IDs
+    created by earlier versions are kept.
     """
+
+    def __init__(
+        self,
+        coordinator: IVTDataCoordinator,
+        entry: ConfigEntry,
+        uid_path: str,
+        emon_path: str,
+        key: str,
+        name: str,
+        icon: str,
+        entity_category: str | None,
+    ):
+        super().__init__(
+            coordinator, entry, uid_path, name,
+            SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING,
+            UnitOfEnergy.KILO_WATT_HOUR, icon, entity_category,
+        )
+        self._emon_path = emon_path
+        self._key = key
 
     @property
     def native_value(self):
-        """Extract cumulative energy from recording data."""
-        entry = self.coordinator.get_entry(self._path)
-        if not entry:
-            return None
+        """Return the cumulative kWh for our key."""
+        return self.coordinator.get_emon_value(self._emon_path, self._key)
 
-        # Recording data format
-        recording = entry.get("recording")
-        if isinstance(recording, list) and len(recording) > 0:
-            # Last entry's 'y' value = cumulative total
-            last = recording[-1]
-            if isinstance(last, dict):
-                return last.get("y")
-
-        # Fallback: maybe it's a simple value
-        return entry.get("value")
+    @property
+    def available(self) -> bool:
+        """Available when the coordinator is healthy and the counter exists."""
+        # Skip IVTSensor.available — it looks for a 'value' key emon lacks
+        return super(IVTSensor, self).available and self.native_value is not None
 
 
 class IVTEmonSensor(CoordinatorEntity, SensorEntity):

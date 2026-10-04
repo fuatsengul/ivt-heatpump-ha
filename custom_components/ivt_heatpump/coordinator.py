@@ -51,6 +51,8 @@ from .const import (
     HS_NUM_STARTS,
     HS_STANDBY,
     HS_EM_STATUS,
+    HS_BRINE_IN_TEMP,
+    HS_BRINE_OUT_TEMP,
     # System
     SYS_OUTDOOR_TEMP,
     SYS_TYPE,
@@ -75,16 +77,10 @@ from .const import (
     VT_DHW_OPTIMIZATION,
     VT_DHW_HIGH_ENABLE,
     VT_DHW_LOW_ENABLE,
-    # Recordings (energy)
-    REC_TOTAL_COMPRESSOR,
-    REC_TOTAL_EHEATER,
-    REC_TOTAL_OUTPUT,
-    REC_CH_COMPRESSOR,
-    REC_CH_EHEATER,
-    REC_CH_OUTPUT,
-    REC_DHW_COMPRESSOR,
-    REC_DHW_EHEATER,
-    REC_DHW_OUTPUT,
+    # Energy monitoring
+    EMON_TOTAL,
+    EMON_CH,
+    EMON_DHW,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -128,6 +124,8 @@ POLL_PATHS = [
     HS_NUM_STARTS,
     HS_STANDBY,
     HS_EM_STATUS,
+    HS_BRINE_IN_TEMP,
+    HS_BRINE_OUT_TEMP,
     # System
     SYS_OUTDOOR_TEMP,
     SYS_TYPE,
@@ -154,17 +152,11 @@ POLL_PATHS = [
     VT_DHW_LOW_ENABLE,
 ]
 
-# Energy recording paths (polled less frequently)
+# Energy monitoring paths (polled less frequently)
 ENERGY_PATHS = [
-    REC_TOTAL_COMPRESSOR,
-    REC_TOTAL_EHEATER,
-    REC_TOTAL_OUTPUT,
-    REC_CH_COMPRESSOR,
-    REC_CH_EHEATER,
-    REC_CH_OUTPUT,
-    REC_DHW_COMPRESSOR,
-    REC_DHW_EHEATER,
-    REC_DHW_OUTPUT,
+    EMON_TOTAL,
+    EMON_CH,
+    EMON_DHW,
 ]
 
 
@@ -191,9 +183,10 @@ class IVTDataCoordinator(DataUpdateCoordinator):
         try:
             data = await self.api.get_many(POLL_PATHS)
 
-            # Poll energy data every 5 minutes (every 5th cycle at 60s interval)
+            # Poll energy data on the first cycle, then every 5 minutes
+            # (every 5th cycle at 60s interval)
             self._energy_counter += 1
-            if self._energy_counter >= 5:
+            if self._energy_counter >= 5 or not self.data:
                 self._energy_counter = 0
                 energy_data = await self.api.get_many(ENERGY_PATHS)
                 data.update(energy_data)
